@@ -63,7 +63,6 @@ function configure(overrides) {
 }
 
 function login(req, res) {
-  console.log('making login request')
   const form = {
     grant_type: 'password',
     email: req.body.user.email,
