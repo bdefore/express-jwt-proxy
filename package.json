@@ -1,0 +1,39 @@
+{
+  "name": "express-jwt-proxy",
+  "description": "Express middlewar for connecting to JWT authentication and proxy to external service",
+  "version": "0.0.1",
+  "contributors": [
+    {
+      "name": "Buck DeFore",
+      "email": "bdefore@gmail.com"
+    }
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bdefore/express-jwt-proxy.git"
+  },
+  "dependencies": {
+    "body-parser": "1.13.2",
+    "express-session": "1.11.3",
+    "http-proxy": "1.11.1",
+    "request": "2.63.0"
+  },
+  "files": [
+    "LICENSE",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">= 0.12.0"
+  },
+  "scripts": {
+  },
+  "homepage": "https://github.com/bdefore/express-jwt-proxy",
+  "maintainers": [
+    {
+      "name": "Buck DeFore",
+      "email": "bdefore@gmail.com"
+    }
+  ],
+  "directories": {}
+}
