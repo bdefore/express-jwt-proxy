@@ -4,10 +4,7 @@
   "main": "./lib/index.js",
   "version": "0.0.2",
   "contributors": [
-    {
-      "name": "Buck DeFore",
-      "email": "bdefore@gmail.com"
-    }
+    "Buck DeFore <bdefore@gmail.com>"
   ],
   "license": "MIT",
   "repository": {
@@ -29,10 +26,17 @@
   },
   "homepage": "https://github.com/bdefore/express-jwt-proxy",
   "maintainers": [
-    {
-      "name": "Buck DeFore",
-      "email": "bdefore@gmail.com"
-    }
+    "Buck DeFore <bdefore@gmail.com>"
   ],
-  "directories": {}
+  "directories": {},
+  "bugs": {
+    "url": "https://github.com/bdefore/express-jwt-proxy/issues"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "jwt",
+    "express",
+    "proxy"
+  ],
+  "author": "Buck DeFore <bdefore@gmail.com> (http://bcdef.org)"
 }

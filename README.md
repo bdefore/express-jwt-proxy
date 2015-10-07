@@ -2,6 +2,10 @@
 
 An express middleware to route login requests to an external authentication server and store JWT's and add them to headers en route to an external service.
 
+## Install
+
+`npm install express-jwt-proxy`
+
 ## Usage
 
 ```
