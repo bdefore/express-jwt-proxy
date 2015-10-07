@@ -21,10 +21,6 @@
     "http-proxy": "1.11.1",
     "request": "2.63.0"
   },
-  "files": [
-    "LICENSE",
-    "index.js"
-  ],
   "engines": {
     "node": ">= 0.12.0"
   },
