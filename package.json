@@ -1,6 +1,7 @@
 {
   "name": "express-jwt-proxy",
   "description": "Express middlewar for connecting to JWT authentication and proxy to external service",
+  "main": "./lib/index.js",
   "version": "0.0.1",
   "contributors": [
     {
@@ -14,6 +15,7 @@
     "url": "git+https://github.com/bdefore/express-jwt-proxy.git"
   },
   "dependencies": {
+    "babel": "5.8.23",
     "body-parser": "1.13.2",
     "express-session": "1.11.3",
     "http-proxy": "1.11.1",
@@ -27,6 +29,7 @@
     "node": ">= 0.12.0"
   },
   "scripts": {
+    "build": "babel ./src --out-dir ./lib"
   },
   "homepage": "https://github.com/bdefore/express-jwt-proxy",
   "maintainers": [
