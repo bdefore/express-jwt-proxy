@@ -6,6 +6,7 @@ import session from 'express-session';
 const options = {
   jwtClientId: undefined,
   jwtClientSecret: undefined,
+  tokenOverride: undefined,
   authenticationEndpoint: undefined,
   apiHost: undefined,
   apiPort: 80,
@@ -30,7 +31,7 @@ function setupProxy(options) {
   // https://github.com/nodejitsu/node-http-proxy/issues/839
   proxy.on('proxyReq', function (proxyReq, req, res) {
     const apiRequestPath = `/${options.apiPrefix}${proxyReq.path}`
-    debug('api request, going to path: ', apiRequestPath)
+    debug('api request, going to path: ', apiRequestPath);
     proxyReq.path = apiRequestPath;
   });
 
@@ -81,7 +82,7 @@ function login(req, res) {
     response = JSON.parse(response.body);
     if(!error && response.access_token) {
       const token = response.access_token;
-      debug('auth returned access token', token)
+      debug('auth returned access token', token);
       req.session.token = token;
       req.session.save((err) => {
         if (err) {
@@ -105,10 +106,13 @@ function logout(req, res) {
 
 function apiProxy(req, res) {
   if(req.session.token) {
-    debug('adding token:', req.session.token)
+    debug('adding token:', req.session.token);
     req.headers.authorization = `Bearer ${req.session.token}`
+  } else if(options.tokenOverride && process.env.NODE_ENV === 'development') {
+    debug('overriding with token:', options.tokenOverride);
+    req.headers.authorization = `Bearer ${options.tokenOverride}`;
   } else {
-    debug('no token to add')
+    debug('no token to add');
   }
   proxy.web(req, res);
 };
