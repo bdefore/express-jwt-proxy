@@ -17,6 +17,17 @@ jwtProxy(app, {
   jwtClientId: process.env.JWT_CLIENT_ID,
   tokenOverride: process.env.JWT_TOKEN_OVERRIDE,
   sessionSecret: process.env.SESSION_SECRET, // required
+  // store in memory, when not using redis
+  // sessionConfig: {
+  //   resave: false,
+  //   saveUninitialized: false
+  // },
+  // store using redis
+  redisConfig: {
+    prefix: 'my-app-name',
+    host: '127.0.0.1',
+    port: 6379
+  },
   apiPrefix: config.apiPrefix, // required
   apiHost: config.apiHost, // required
   apiPort: config.apiPort, // required
@@ -34,7 +45,6 @@ You should then be able to use the following routes:
 
 ## TODO / Help Wanted
 
-- Session store integration
 - Examples
 
 ## Inspiration
