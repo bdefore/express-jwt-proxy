@@ -2,6 +2,7 @@ import bodyParser from 'body-parser';
 import httpProxy from 'http-proxy';
 import request from 'request';
 import session from 'express-session';
+const RedisStore = require('connect-redis')(session);
 
 const options = {
   jwtClientId: undefined,
@@ -53,12 +54,6 @@ function configure(overrides) {
     options[key] = overrides[key]
   }
   debug('JWT Config options:', options);
-
-  options.sessionConfig = {
-    secret: options.sessionSecret,
-    resave: false,
-    saveUninitialized: false
-  }
 
   setupProxy(options);
 }
@@ -117,11 +112,27 @@ function apiProxy(req, res) {
   proxy.web(req, res);
 };
 
+function setupSessionManager(app, options) {
+  if(options.redisConfig) {
+    app.use(`/${options.apiPrefix}`, session({
+      store: new RedisStore(options.redisConfig),
+      secret: options.sessionSecret
+    }));
+    debug('Using Redis store at ', `${options.redisConfig.host}:${options.redisConfig.port}`);
+  } else if(options.sessionConfig) {
+    options.sessionConfig.secret = options.sessionSecret;
+    app.use(`/${options.apiPrefix}`, session(options.sessionConfig));
+    debug('Using memory store. Sessions will not persist after restart.')
+  } else {
+    throw new Error('Either a sessionConfig or a redisConfig must be specified.');
+  }
+}
+
 export default function (app, overrides) {
 
   configure(overrides);
+  setupSessionManager(app, options);
 
-  app.use(`/${options.apiPrefix}`, session(options.sessionConfig));
   app.use(`/${options.apiPrefix}/login`, bodyParser.json());
   app.post(`/${options.apiPrefix}/login`, login);
   app.post(`/${options.apiPrefix}/logout`, logout);

@@ -2,7 +2,7 @@
   "name": "express-jwt-proxy",
   "description": "Express middlewar for connecting to JWT authentication and proxy to external service",
   "main": "./lib/index.js",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "contributors": [
     "Buck DeFore <bdefore@gmail.com>"
   ],
@@ -14,6 +14,7 @@
   "dependencies": {
     "babel": "5.8.23",
     "body-parser": "1.13.2",
+    "connect-redis": "3.0.1",
     "express-session": "1.11.3",
     "http-proxy": "1.11.1",
     "request": "2.63.0"
@@ -36,7 +37,8 @@
   "keywords": [
     "jwt",
     "express",
-    "proxy"
+    "proxy",
+    "redis"
   ],
   "author": "Buck DeFore <bdefore@gmail.com> (http://bcdef.org)"
 }
