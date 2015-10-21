@@ -114,7 +114,7 @@ function apiProxy(req, res) {
 
 function setupSessionManager(app, options) {
   if(options.redisConfig) {
-    app.use(`/${options.apiPrefix}`, session({
+    app.use(session({
       store: new RedisStore(options.redisConfig),
       secret: options.sessionSecret
     }));
@@ -122,20 +122,29 @@ function setupSessionManager(app, options) {
     debug('Using Redis store at ', url);
   } else if(options.sessionConfig) {
     options.sessionConfig.secret = options.sessionSecret;
-    app.use(`/${options.apiPrefix}`, session(options.sessionConfig));
+    app.use(session(options.sessionConfig));
     debug('Using memory store. Sessions will not persist after restart.')
   } else {
     throw new Error('Either a sessionConfig or a redisConfig must be specified.');
   }
 }
 
-export default function (app, overrides) {
+function addSessionStateHeader(req, res, next) {
+  if(req.session && req.session.token) {
+    res.set('logged-in', true);
+  } else {
+    res.set('logged-in', false);
+  }
+  next();
+}
 
+export default function (app, overrides) {
   configure(overrides);
   setupSessionManager(app, options);
 
   app.use(`/${options.apiPrefix}/login`, bodyParser.json());
   app.post(`/${options.apiPrefix}/login`, login);
   app.post(`/${options.apiPrefix}/logout`, logout);
+  app.use(addSessionStateHeader);
   app.use(`/${options.apiPrefix}`, apiProxy);
 }

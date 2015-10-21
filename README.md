@@ -43,6 +43,12 @@ You should then be able to use the following routes:
 
 `{config.apiPrefix}/*`: Will redirect to the configured API endpoint, appending the JWT stored in the session to the header
 
+In your subsequent middleware, you'll be able to access the login state by using the following:
+
+```
+const loggedIn = res._headers['logged-in'] === "true";
+```
+
 ## TODO / Help Wanted
 
 - Examples
