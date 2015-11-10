@@ -113,14 +113,11 @@ function apiProxy(req, res) {
 
   if (req.session.access_token) {
     const now = new Date().getTime() / 1000;
-    const timeSinceCreation = Math.round(now - Number(req.session.created_at));
-    const hasExpired = timeSinceCreation > Number(req.session.expires_in);
+    const secondsSinceCreation = Math.round(now - Number(req.session.created_at));
+    const hasExpired = secondsSinceCreation > Number(req.session.expires_in);
 
-    debug('now', now);
-    debug('created_at', req.session.created_at);
-    debug('time since creation', timeSinceCreation);
+    debug('seconds since creation', secondsSinceCreation);
     debug('greater than expiry?', hasExpired);
-    debug('adding token:', req.session.access_token);
 
     if (hasExpired) {
       debug('access token expired');
@@ -130,6 +127,7 @@ function apiProxy(req, res) {
         makeProxiedCall(req, res, headers);
       })
     } else {
+      debug('adding token:', req.session.access_token);
       headers.authorization = `Bearer ${req.session.access_token}`
       makeProxiedCall(req, res, headers);
     }
@@ -144,18 +142,28 @@ function apiProxy(req, res) {
 };
 
 function makeProxiedCall(req, res, headers) {
-  const url = options.apiHost + ':' + options.apiPort + '/' + options.apiPrefix + req.url;
-  debug('proxying to api at url:', url);
-  request({
+  let requestOptions = {
     method: req.method,
-    url: url,
     headers: headers
-  }, (error, serviceResponse, body) => {
-    if (serviceResponse.statusCode === 401) {
-      res.sendStatus(401);
-    } else {
+  }
+  if (req.method === 'GET') {
+    requestOptions.url = options.apiHost + ':' + options.apiPort + '/' + req.originalUrl;
+  } else {
+    requestOptions.url = options.apiHost + ':' + options.apiPort + '/' + options.apiPrefix + req.url;
+    requestOptions.json = true;
+    requestOptions.body = req.body;
+  }
+  debug('proxying to api', requestOptions);
+
+  request(requestOptions, (error, serviceResponse, body) => {
+    if (serviceResponse.statusCode >= 200 && serviceResponse.statusCode < 300) {
+      res.status(serviceResponse.statusCode);
       res.set(serviceResponse.headers);
       res.json(body);
+    } else {
+      debug('api not ok.', serviceResponse.statusCode, error, body);
+      res.status(serviceResponse.statusCode);
+      res.send(body);
     }
   });
 }
@@ -190,7 +198,7 @@ export default function (app, overrides) {
   configure(overrides);
   setupSessionManager(app, options);
 
-  app.use(`/${options.apiPrefix}/login`, bodyParser.json());
+  app.use(`/${options.apiPrefix}`, bodyParser.json());
   app.post(`/${options.apiPrefix}/login`, login);
   app.post(`/${options.apiPrefix}/logout`, logout);
   app.use(addSessionStateHeader);
