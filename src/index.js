@@ -119,10 +119,14 @@ function apiProxy(req, res) {
     debug('seconds since creation', secondsSinceCreation);
     debug('greater than expiry?', hasExpired);
 
-    if (hasExpired) {
+    if (hasExpired && req.session.refresh_token) {
       debug('access token expired');
       refreshAuth(req, res).then(() => {
         debug('refresh auth successful, now making proxied call');
+        headers.authorization = `Bearer ${req.session.access_token}`
+        makeProxiedCall(req, res, headers);
+      }).catch(() => {
+        debug('failed to refresh token');
         headers.authorization = `Bearer ${req.session.access_token}`
         makeProxiedCall(req, res, headers);
       })
