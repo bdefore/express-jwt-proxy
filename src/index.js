@@ -151,7 +151,7 @@ function makeProxiedCall(req, res, headers) {
     headers: headers
   }
   if (req.method === 'GET') {
-    requestOptions.url = options.apiHost + ':' + options.apiPort + '/' + req.originalUrl;
+    requestOptions.url = options.apiHost + ':' + options.apiPort + req.originalUrl;
   } else {
     requestOptions.url = options.apiHost + ':' + options.apiPort + '/' + options.apiPrefix + req.url;
     requestOptions.json = true;
