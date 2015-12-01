@@ -12,6 +12,7 @@ const options = {
   apiHost: undefined,
   apiPort: 80,
   apiPrefix: 'api',
+  apiPrefixForService: 'api',
   debug: false
 };
 
@@ -148,12 +149,10 @@ function apiProxy(req, res) {
 function makeProxiedCall(req, res, headers) {
   let requestOptions = {
     method: req.method,
-    headers: headers
+    headers: headers,
+    url: options.apiHost + ':' + options.apiPort + '/' + options.apiPrefixForService + req.url
   }
-  if (req.method === 'GET') {
-    requestOptions.url = options.apiHost + ':' + options.apiPort + req.originalUrl;
-  } else {
-    requestOptions.url = options.apiHost + ':' + options.apiPort + '/' + options.apiPrefix + req.url;
+  if (req.method !== 'GET') {
     requestOptions.json = true;
     requestOptions.body = req.body;
   }

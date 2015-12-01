@@ -28,7 +28,8 @@ jwtProxy(app, {
     host: '127.0.0.1',
     port: 6379
   },
-  apiPrefix: config.apiPrefix, // required
+  apiPrefix: config.apiPrefix,
+  apiPrefixForService: config.apiPrefixForService,
   apiHost: config.apiHost, // required
   apiPort: config.apiPort, // required
   debug: false

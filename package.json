@@ -22,7 +22,9 @@
     "node": ">= 0.12.0"
   },
   "scripts": {
-    "build": "babel ./src --out-dir ./lib"
+    "compile": "babel ./src -d ./lib",
+    "dev": "babel src/ -w -d $PROJECT_PATH/node_modules/express-jwt-proxy/lib",
+    "prepublish": "npm run compile"
   },
   "homepage": "https://github.com/bdefore/express-jwt-proxy",
   "maintainers": [
