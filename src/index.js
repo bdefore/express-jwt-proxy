@@ -160,7 +160,7 @@ function makeProxiedCall(req, res, headers) {
   debug('proxying to api', requestOptions);
 
   request(requestOptions, (error, serviceResponse, body) => {
-    if (!error && serviceResponse && serviceResponse.statusCode >= 200 && serviceResponse.statusCode < 300) {
+    if (!error && serviceResponse && serviceResponse.statusCode >= 200 && serviceResponse.statusCode < 400) {
       res.status(serviceResponse.statusCode);
       res.set(serviceResponse.headers);
       res.json(body);
