@@ -4,16 +4,26 @@ import session from 'express-session';
 
 const RedisStore = require('connect-redis')(session);
 
-const options = {
-  jwtClientId: undefined,
-  jwtClientSecret: undefined,
-  tokenOverride: undefined,
-  authenticationEndpoint: undefined,
-  apiHost: undefined,
-  apiPort: 80,
-  apiPrefix: 'api',
-  apiPrefixForService: 'api',
-  debug: false
+let options;
+const defaults = {
+  api: {
+    endpoint: '/api',
+    host: undefined,
+    port: 80,
+    tokenOverride: undefined
+  },
+  auth: {
+    clientId: undefined,
+    clientSecret: undefined,
+    endpoint: undefined
+  },
+  debug: false,
+  endpoint: '/api',
+  sessionStore: {
+    type: 'memory',
+    resave: false,
+    saveUninitialized: false
+  }
 };
 
 function debug(...args) {
@@ -23,9 +33,7 @@ function debug(...args) {
 }
 
 function configure(overrides) {
-  for(const key in overrides) {
-    options[key] = overrides[key]
-  }
+  options = Object.assign(defaults, overrides);
   debug('JWT Config options:', options);
 }
 
@@ -38,17 +46,15 @@ function refreshAuth(req, res) {
     }
     request({
       method: 'POST',
-      url: options.authenticationEndpoint,
+      url: options.auth.endpoint,
       form: form
     }, (error, response, body) => {
-      debug('refreshAuth error?', error);
-      response = JSON.parse(response.body);
-      if (!error && response.access_token) {
-        storeToken(req, response);
-        resolve();
-      } else {
+      if (error || !response || !JSON.parse(response.body).access_token) {
         debug('failed to refresh token', error);
         reject(error);
+      } else {
+        storeToken(req, JSON.parse(response.body));
+        resolve();
       }
     });
   });
@@ -71,13 +77,12 @@ function storeToken(req, tokenData) {
 }
 
 function handleAuthResponse(error, response, body, req, res) {
-  response = JSON.parse(response.body);
-  if (!error && response.access_token) {
-    storeToken(req, response);
-    res.sendStatus(200);
-  } else {
+  if (error || !response || !JSON.parse(response.body).access_token) {
     debug('auth error', body);
     res.sendStatus(401);
+  } else {
+    storeToken(req, JSON.parse(response.body));
+    res.sendStatus(200);
   }
 }
 
@@ -88,15 +93,16 @@ function login(req, res) {
     password: req.body.user.password
   }
   // client id and secret are not always required, only add if specified
-  if (options.jwtClientId && options.jwtClientSecret) {
-    form.jwtClientId = options.jwtClientId;
-    form.jwtClientSecret = options.jwtClientSecret;
+  if (options.auth.clientId && options.auth.clientSecret) {
+    form.auth.clientId = options.auth.clientId;
+    form.auth.clientSecret = options.auth.clientSecret;
   }
   request({
     method: 'POST',
-    url: options.authenticationEndpoint,
+    url: options.auth.endpoint,
     form: form
   }, (error, response, body) => {
+    // console.log('got response from auth server:', error, response);
     handleAuthResponse(error, response, body, req, res);
   });
 }
@@ -136,9 +142,9 @@ function apiProxy(req, res) {
       headers.authorization = `Bearer ${req.session.access_token}`
       makeProxiedCall(req, res, headers);
     }
-  } else if (options.tokenOverride && process.env.NODE_ENV === 'development') {
-    debug('overriding with token:', options.tokenOverride);
-    headers.authorization = `Bearer ${options.tokenOverride}`;
+  } else if (options.api.tokenOverride && process.env.NODE_ENV === 'development') {
+    debug('overriding with token:', options.api.tokenOverride);
+    headers.authorization = `Bearer ${options.api.tokenOverride}`;
     makeProxiedCall(req, res, headers);
   } else {
     debug('no token to add');
@@ -150,7 +156,7 @@ function makeProxiedCall(req, res, headers) {
   let requestOptions = {
     method: req.method,
     headers: headers,
-    url: options.apiHost + ':' + options.apiPort + '/' + options.apiPrefixForService + req.url
+    url: options.api.host + ':' + options.api.port + options.api.endpoint + req.url
   }
   if (req.method !== 'GET') {
     requestOptions.json = true;
@@ -175,19 +181,16 @@ function makeProxiedCall(req, res, headers) {
 }
 
 function setupSessionManager(app, options) {
-  if (options.redisConfig) {
-    app.use(session({
-      store: new RedisStore(options.redisConfig),
-      secret: options.sessionSecret
-    }));
-    const url = options.redisConfig.url || `${options.redisConfig.host}:${options.redisConfig.port}`;
-    debug('Using Redis store at ', url);
-  } else if (options.sessionConfig) {
-    options.sessionConfig.secret = options.sessionSecret;
-    app.use(session(options.sessionConfig));
-    debug('Using memory store. Sessions will not persist after restart.')
+  if (options.sessionStore.type === 'redis') {
+    const redisConfig = Object.assign(options.sessionStore, { store: new RedisStore(options.sessionStore) });
+    // object assign is removing these if not specified in project config
+    redisConfig.resave = false;
+    redisConfig.saveUninitialized = false;
+    debug('Using Redis for session store', redisConfig);
+    app.use(session(redisConfig));
   } else {
-    throw new Error('Either a sessionConfig or a redisConfig must be specified.');
+    debug('Using memory session store.');
+    app.use(session(options.sessionStore));
   }
 }
 
@@ -204,9 +207,9 @@ export default function (app, overrides) {
   configure(overrides);
   setupSessionManager(app, options);
 
-  app.use(`/${options.apiPrefix}`, bodyParser.json());
-  app.post(`/${options.apiPrefix}/login`, login);
-  app.post(`/${options.apiPrefix}/logout`, logout);
+  app.use(`${options.endpoint}`, bodyParser.json());
+  app.post(`${options.endpoint}/login`, login);
+  app.post(`${options.endpoint}/logout`, logout);
   app.use(addSessionStateHeader);
-  app.use(`/${options.apiPrefix}`, apiProxy);
+  app.use(`${options.endpoint}`, apiProxy);
 }
