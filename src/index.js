@@ -94,8 +94,8 @@ function login(req, res) {
   }
   // client id and secret are not always required, only add if specified
   if (options.auth.clientId && options.auth.clientSecret) {
-    form.auth.clientId = options.auth.clientId;
-    form.auth.clientSecret = options.auth.clientSecret;
+    form.jwtClientId = options.auth.clientId;
+    form.jwtClientSecret = options.auth.clientSecret;
   }
   request({
     method: 'POST',
