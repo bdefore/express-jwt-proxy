@@ -172,7 +172,7 @@ function makeProxiedCall(req, res, headers) {
     } else if (serviceResponse) {
       debug('api not ok.', serviceResponse.statusCode, error, body);
       res.status(serviceResponse.statusCode);
-      res.send(body);
+      res.json(body);
     } else {
       debug('api not ok. no response.', error, body);
       res.send(error);
