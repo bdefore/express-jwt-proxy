@@ -8,32 +8,35 @@ An Express middleware to route login requests to an external authentication serv
 
 ## Usage
 
-```
+```javascript
+const isProduction = process.env.NODE_ENV === 'production';
+const apiPortDefault = isProduction ? 443 : 3000;
+const apiPort = process.env.API_PORT || apiPortDefault;
+
+const authConfig = {
+  api: {
+    endpoint: '/v1',
+    host: process.env.API_HOST || 'http://localhost',
+    port: process.env.API_PORT || apiPortDefault
+  },
+  auth: {
+    clientId: isProduction ? process.env.JWT_CLIENT_ID : undefined,
+    clientSecret: isProduction ? process.env.JWT_CLIENT_SECRET : undefined,
+    endpoint: `${process.env.AUTHENTICATION_HOST}/authenticate`
+  },
+  debug: !isProduction,
+  endpoint: '/api',
+  sessionStore: {
+    type: 'redis',
+    prefix: 'jwt-example',
+    secret: process.env.JWT_CLIENT_SECRET,
+    url: process.env.REDIS_URL
+  }
+}
+
 const app = new Express();
 
-jwtProxy(app, {
-  authenticationEndpoint: `${process.env.AUTHENTICATION_HOST}/oauth/token`, // required
-  jwtClientSecret: process.env.JWT_CLIENT_SECRET,
-  jwtClientId: process.env.JWT_CLIENT_ID,
-  tokenOverride: process.env.JWT_TOKEN_OVERRIDE,
-  sessionSecret: process.env.SESSION_SECRET, // required
-  // store in memory, when not using redis
-  // sessionConfig: {
-  //   resave: false,
-  //   saveUninitialized: false
-  // },
-  // store using redis
-  redisConfig: {
-    prefix: 'my-app-name',
-    host: '127.0.0.1',
-    port: 6379
-  },
-  apiPrefix: config.apiPrefix,
-  apiPrefixForService: config.apiPrefixForService,
-  apiHost: config.apiHost, // required
-  apiPort: config.apiPort, // required
-  debug: false
-});
+jwtProxy(app, authConfig);
 ```
 
 You should then be able to use the following routes:
@@ -50,9 +53,9 @@ In your subsequent middleware, you'll be able to access the login state by using
 const loggedIn = res._headers['logged-in'] === "true";
 ```
 
-## TODO / Help Wanted
+## Examples
 
-- Examples
+- [Using Universal Redux npm package](https://github.com/bdefore/universal-redux/tree/0.x/examples/jwt)
 
 ## Inspiration
 
