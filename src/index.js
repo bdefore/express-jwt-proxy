@@ -32,6 +32,14 @@ function debug(...args) {
   }
 }
 
+function parse(obj) {
+  try {
+    return JSON.parse(obj);
+  } catch (error) {
+    return null;
+  }
+}
+
 function configure(overrides) {
   options = Object.assign(defaults, overrides);
   debug('JWT Config options:', options);
@@ -49,11 +57,11 @@ function refreshAuth(req, res) {
       url: options.auth.endpoint,
       form: form
     }, (error, response, body) => {
-      if (error || !response || !JSON.parse(response.body).access_token) {
+      if (error || !response || !parse(response.body) || !parse(response.body).access_token) {
         debug('failed to refresh token', error);
         reject(error);
       } else {
-        storeToken(req, JSON.parse(response.body));
+        storeToken(req, parse(response.body));
         resolve();
       }
     });
@@ -61,27 +69,31 @@ function refreshAuth(req, res) {
 }
 
 function storeToken(req, tokenData) {
-  req.session.access_token = tokenData.access_token;
-  req.session.refresh_token = tokenData.refresh_token;
-  req.session.expires_in = tokenData.expires_in;
-  req.session.created_at = tokenData.created_at;
-  debug('auth returned access token', req.session.access_token);
-  debug('auth returned refresh token', req.session.refresh_token);
-  debug('auth returned expires in', req.session.expires_in);
-  debug('auth returned created at', req.session.created_at);
-  req.session.save((err) => {
-    if (err) {
-      debug('error saving session', err);
-    }
-  });
+  if (tokenData) {
+    req.session.access_token = tokenData.access_token;
+    req.session.refresh_token = tokenData.refresh_token;
+    req.session.expires_in = tokenData.expires_in;
+    req.session.created_at = tokenData.created_at;
+    debug('auth returned access token', req.session.access_token);
+    debug('auth returned refresh token', req.session.refresh_token);
+    debug('auth returned expires in', req.session.expires_in);
+    debug('auth returned created at', req.session.created_at);
+    req.session.save((err) => {
+      if (err) {
+        debug('error saving session', err);
+      }
+    });
+  } else {
+    debug('no token data received to store');
+  }
 }
 
 function handleAuthResponse(error, response, body, req, res) {
-  if (error || !response || !JSON.parse(response.body).access_token) {
+  if (error || !response || !parse(response.body) || !parse(response.body).access_token) {
     debug('auth error', body);
     res.sendStatus(401);
   } else {
-    storeToken(req, JSON.parse(response.body));
+    storeToken(req, parse(response.body));
     res.sendStatus(200);
   }
 }
