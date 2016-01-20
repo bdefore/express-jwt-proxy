@@ -204,7 +204,7 @@ function setupSessionManager(app, options) {
     // object assign is removing these if not specified in project config
     redisConfig.resave = false;
     redisConfig.saveUninitialized = false;
-    debug('Using Redis for session store', redisConfig);
+    debug('Using Redis for session store');
     app.use(session(redisConfig));
   } else {
     debug('Using memory session store.');
