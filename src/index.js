@@ -1,3 +1,4 @@
+import util from 'util';
 import bodyParser from 'body-parser';
 import request from 'request';
 import session from 'express-session';
@@ -28,7 +29,12 @@ const defaults = {
 
 function debug(...args) {
   if (options.debug) {
-    console.log(args);
+    const utilOptions = {
+      depth: 12,
+      colors: true
+    };
+
+    console.log(util.inspect(args, utilOptions));
   }
 }
 
@@ -94,7 +100,7 @@ function handleAuthResponse(error, response, body, req, res) {
     res.sendStatus(401);
   } else {
     storeToken(req, parse(response.body));
-    res.sendStatus(200);
+    res.status(200).json({ result: 'Success' });
   }
 }
 
@@ -123,7 +129,7 @@ function logout(req, res) {
   req.session.destroy((err) => {
     debug('error destroying session', err);
   });
-  res.sendStatus(200);
+  res.status(200).json({ result: 'Success' });
 }
 
 function apiProxy(req, res) {
