@@ -75,7 +75,14 @@ function refreshAuth(req, res) {
 }
 
 function storeToken(req, tokenData) {
-  if (tokenData) {
+  return new Promise((resolve, reject) => {
+    if (!tokenData) {
+      reject('no token data received to store')
+    }
+    if (!req.session) {
+      reject('no session retrieved from store. is redis down?');
+    }
+
     req.session.access_token = tokenData.access_token;
     req.session.refresh_token = tokenData.refresh_token;
     req.session.expires_in = tokenData.expires_in;
@@ -86,12 +93,12 @@ function storeToken(req, tokenData) {
     debug('auth returned created at', req.session.created_at);
     req.session.save((err) => {
       if (err) {
-        debug('error saving session', err);
+        reject(err);
+      } else {
+        resolve('token stored');
       }
     });
-  } else {
-    debug('no token data received to store');
-  }
+  })
 }
 
 function handleAuthResponse(error, response, body, req, res) {
@@ -99,8 +106,14 @@ function handleAuthResponse(error, response, body, req, res) {
     debug('auth error', body);
     res.sendStatus(401);
   } else {
-    storeToken(req, parse(response.body));
-    res.status(200).json({ result: 'Success' });
+    storeToken(req, parse(response.body))
+      .then(() => {
+        res.status(200).json({ result: 'Success' });
+      })
+      .catch((err) => {
+        debug(err);
+        res.sendStatus(401);
+      })    
   }
 }
 
@@ -126,9 +139,13 @@ function login(req, res) {
 }
 
 function logout(req, res) {
-  req.session.destroy((err) => {
-    debug('error destroying session', err);
-  });
+  if (req.session) {
+    req.session.destroy((err) => {
+      debug('error destroying session', err);
+    });
+  } else {
+    debug('error destroying session. does not exist. is redis down?');
+  }
   res.status(200).json({ result: 'Success' });
 }
 
@@ -136,7 +153,7 @@ function apiProxy(req, res) {
   let headers = {};
   headers['Content-Type'] = 'application/json';
 
-  if (req.session.access_token) {
+  if (req.session && req.session.access_token) {
     const now = new Date().getTime() / 1000;
     const secondsSinceCreation = Math.round(now - Number(req.session.created_at));
     const hasExpired = secondsSinceCreation > Number(req.session.expires_in);
@@ -165,7 +182,7 @@ function apiProxy(req, res) {
     headers.authorization = `Bearer ${options.api.tokenOverride}`;
     makeProxiedCall(req, res, headers);
   } else {
-    debug('no token to add');
+    debug('no token to add or no session exists');
     makeProxiedCall(req, res, headers);
   }
 };
